@@ -7,12 +7,13 @@ const prisma = new PrismaClient();
 // GET /api/tasks/[id] - Get a specific task
 export const GET = withAuth(async (
   request: AuthenticatedRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
+  const { id } = await params;
   try {
     const task = await prisma.task.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: request.user.userId
       },
       include: {
@@ -45,15 +46,16 @@ export const GET = withAuth(async (
 // PUT /api/tasks/[id] - Update a specific task
 export const PUT = withAuth(async (
   request: AuthenticatedRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
+  const { id } = await params;
   try {
     const { title, description, status, categoryId, dueAt } = await request.json();
 
     // Check if task exists and belongs to user
     const existingTask = await prisma.task.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: request.user.userId
       }
     });
@@ -66,7 +68,7 @@ export const PUT = withAuth(async (
     }
 
     const updatedTask = await prisma.task.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         title: title || existingTask.title,
         description: description !== undefined ? description : existingTask.description,
@@ -100,13 +102,14 @@ export const PUT = withAuth(async (
 // DELETE /api/tasks/[id] - Delete a specific task
 export const DELETE = withAuth(async (
   request: AuthenticatedRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
+  const { id } = await params;
   try {
     // Check if task exists and belongs to user
     const existingTask = await prisma.task.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: request.user.userId
       }
     });
@@ -119,7 +122,7 @@ export const DELETE = withAuth(async (
     }
 
     await prisma.task.delete({
-      where: { id: params.id }
+      where: { id: id }
     });
 
     return NextResponse.json({
